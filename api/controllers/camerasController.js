@@ -1,5 +1,6 @@
 import AxiosDigestAuth from '@mhoc/axios-digest-auth';
 import csvToJson from 'csvtojson';
+import formatDate from "../../helpers/formatDate";
 const util = require('util');
 const moment = require('moment');
 const config = process.env;
@@ -72,7 +73,7 @@ class CamerasController {
                   jsonDataAux.forEach(element => {
                     elemDate = new Date(element['Hora']);
                     dateString = moment(elemDate).format('YYYY-MM-DD HH:mm:ss');
-                    
+                    // formatDate();
                     dataFlow = {
                       id : null,
                       license : element['Nº placa'],
