@@ -13,7 +13,6 @@ class CamerasController {
         let jsonString;
         let jsonData = [];
         let jsonDataDb = [];
-        let elemDate;
         let dateString;
 
         const dateNow = moment().format('YYYY-MM-DD HH:mm:ss');
@@ -71,9 +70,8 @@ class CamerasController {
                   
                   let dataFlow = {};
                   jsonDataAux.forEach(element => {
-                    elemDate = new Date(element['Hora']);
-                    dateString = moment(elemDate).format('YYYY-MM-DD HH:mm:ss');
-                    // formatDate();
+
+                    dateString = formatDate(element['Hora']);
                     dataFlow = {
                       id : null,
                       license : element['Nº placa'],

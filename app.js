@@ -1,4 +1,5 @@
 import { getDataCam } from './services/cameraService';
+import { getWeights } from './services/weightsService';
 const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('config');
@@ -17,6 +18,7 @@ app.use(cors({ origin: "*" }));
 const routes = require("./api/routes/index");
 app.use('/api', routes);
 
-getDataCam(10);
+getDataCam(80);
+getWeights(2);
   
 module.exports = app;
