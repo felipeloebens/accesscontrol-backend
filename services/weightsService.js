@@ -11,7 +11,7 @@ function getWeights(time){
             
             const dateNow = Date.now();
             const dateLastReg = new Date(getLastRecord.data[0].pass_date)
-            console.log(dateLastReg);
+
             // const timestampLastReg = dateLastReg.getTime();
             // const difDates = Math.round(((dateNow - timestampLastReg)/1000)/60);
             // let minutesGet = 2;
