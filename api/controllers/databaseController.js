@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const oracledb = require('oracledb');
 const config = process.env;
+import timestampToDate from "../../helpers/timestampToDate";
 
 function connectDatabase(){
     const conn = oracledb.getConnection({
@@ -157,6 +158,28 @@ class DatabaseController {
         } finally {
             if (connection) {
                 const data = await connection.execute(`INSERT INTO ADMPESAGEM.SCALES VALUES(:id, :scales, :weight, :license, TO_DATE(:pass_date, 'YYYY/MM/DD HH24:MI:SS'))`, [null , req.body.scales, req.body.weight, req.body.license, req.body.pass_date], {autoCommit: true});
+                return res.status(200).json(data);
+            try {
+                await connection.close(); 
+            } catch (err) {
+                return res.status(500).json({error : err.message});
+            }
+            }
+        }
+    }
+
+    
+    async updateWeight(req, res) {
+    
+        let connection
+        console.log(req.body)
+        try {
+            connection = await connectDatabase();
+        } catch (err) {
+            return res.status(500).json({error : err.message});
+        } finally {
+            if (connection) {
+                const data = await connection.execute(`UPDATE ADMPESAGEM.SCALES SET license=:license WHERE id=:id`, {id : req.body.id, license : req.body.license}, {autoCommit: true});
                 return res.status(200).json(data);
             try {
                 await connection.close(); 
