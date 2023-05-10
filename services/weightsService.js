@@ -10,7 +10,7 @@ function getWeights(time){
 
             try {
 
-                const getLastRecord = await axios.get(`http://${config.SERVER_URL}:3333/api/database/listWeights`,{ data : {"last" : true}});
+                const getLastRecord = await axios.get(`http://${config.SERVER_URL}:3333/api/database/listWeights`,{ headers : {last : true}});
                 const dateLastReg = new Date(getLastRecord.data[0].pass_date);
 
                 

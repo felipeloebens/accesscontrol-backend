@@ -1,10 +1,18 @@
 const ldap = require('ldapjs');
 const jwt = require("jsonwebtoken");
 const domainAD = '@fockink.ind.br';
+import CryptoJS from "crypto-js";
 const config = process.env;
+
 
 class LoginController{
     login(req,res){
+
+        const usernameAd = CryptoJS.AES.decrypt(req.body.user, 'Secret user');
+        const usernameAdOriginal = usernameAd.toString(CryptoJS.enc.Utf8);
+
+        const passwordAd = CryptoJS.AES.decrypt(req.body.pass, 'Secret pass');
+        const passwordOriginal = passwordAd.toString(CryptoJS.enc.Utf8);
         const client = ldap.createClient({
             url: [config.URL_AD],
             timeout: 5000,
@@ -14,7 +22,7 @@ class LoginController{
    
         function errorForReturn(){   
             res.json({
-                user : req.body.user,
+                user : usernameAdOriginal,
                 name : 'none',
                 occupation : 'none',
                 permission: 'N',
@@ -23,14 +31,15 @@ class LoginController{
         }
 
         const opts = {
-            filter: '(&(sAMAccountName='+req.body.user+'))',
+            filter: '(&(sAMAccountName='+usernameAdOriginal+'))',
             scope: 'sub',
             // This attribute list is what broke your solution
             //attributes:['sAMAccountName','dn']
         };
 
         try {
-            client.bind(req.body.user + domainAD, req.body.pass, function (error) { //first need to bind
+
+            client.bind(usernameAdOriginal + domainAD, passwordOriginal, function (error) { //first need to bind
                 if(error){
                     client.unbind(function(error) {
                         errorForReturn(); // retorna json sem permissão
@@ -40,7 +49,7 @@ class LoginController{
                         search.on('searchEntry', function(entry) {
                             if(entry.object){
                                 const token = jwt.sign(
-                                    { user_id: req.body.user},
+                                    { user_id: usernameAdOriginal},
                                     "" + process.env.TOKEN_KEY,
                                     {
                                       expiresIn: "4h",
@@ -48,7 +57,7 @@ class LoginController{
                                   );
                                   
                                 res.json({
-                                    user : req.body.user,
+                                    user : usernameAdOriginal,
                                     name : entry.object.name || entry.object.cn,
                                     occupation : entry.object.title,
                                     permission: 'S',
@@ -61,11 +70,17 @@ class LoginController{
                             });
                         });
     
+                        try{
                         search.on('error', function(error) {
                             client.unbind(function(error) {
                                 return errorForReturn(); // retorna json sem permissão
                             });
                         });           
+                    }catch(error){
+                        res.json({
+                            error : "Connection error with Windows AD",
+                        })
+                    }
                     });
                 }
             });
@@ -74,6 +89,12 @@ class LoginController{
                 errorForReturn(); // retorna json sem permissão
             });
         }
+     }
+
+     checkToken(req, res){
+
+        req.body.token
+        return res.status(200).json({permission : "S"});
 
      }
 }

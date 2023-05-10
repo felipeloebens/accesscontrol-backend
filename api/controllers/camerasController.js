@@ -18,16 +18,16 @@ class CamerasController {
         const dateNow = moment().format('YYYY-MM-DD HH:mm:ss');
         const actualDate = moment.utc(dateNow).toDate();
 
-        if(req.body.startDate && req.body.finalDate){
-          startDate = moment.utc(req.body.startDate).toDate();
-          finalDate = moment.utc(req.body.finalDate).toDate();
+        if(req.headers.startdate && req.headers.finaldate){
+          startdate = moment.utc(req.headers.startdate).toDate();
+          finaldate = moment.utc(req.headers.finaldate).toDate();
         }else{
           finalDate = actualDate;
         }
 
-        if(req.body.minutes && (!req.body.initialDate && !req.body.finalDate)){
-          startDate = moment.utc(dateNow).subtract(req.body.minutes, 'minutes').toDate();
-        }else if(!req.body.initialDate && !req.body.finalDate){
+        if(req.headers.minutes && (!req.headers.initialdate && !req.headers.finaldate)){
+          startDate = moment.utc(dateNow).subtract(req.headers.minutes, 'minutes').toDate();
+        }else if(!req.headers.initialdate && !req.headers.finaldate){
           startDate = moment.utc(dateNow).subtract(180, 'minutes').toDate();
         }
 
@@ -89,7 +89,7 @@ class CamerasController {
               }
             }
               jsonData.push({status :"Ok"});
-              if(req.body.db === true){
+              if(req.headers.db === "true"){
                 jsonData.push({vehicles : jsonDataDb});
               }else{
                 jsonData.push({vehicles : JSON.parse(jsonString)});

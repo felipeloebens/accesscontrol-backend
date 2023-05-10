@@ -7,7 +7,7 @@ function getDataCam(time){
 
     async function getCam(){
 
-            const getLastRecord = await axios.get(`http://${config.SERVER_URL}:3333/api/database/listFlow`,{ data : {"last" : true}});
+            const getLastRecord = await axios.get(`http://${config.SERVER_URL}:3333/api/database/listFlow`,{ headers : {last : true}});
             
             const dateNow = Date.now();
             const dateLastReg = new Date(getLastRecord.data[0].pass_date)
@@ -23,7 +23,7 @@ function getDataCam(time){
             console.log("Minutes: ",minutesGet);
 
             try {
-                const connectionCam = await axios.get(`http://${config.SERVER_URL}:3333/api/cameras/`,{ data : {db : true, "minutes" : minutesGet}});
+                const connectionCam = await axios.get(`http://${config.SERVER_URL}:3333/api/cameras/`,{ headers : {db : true, minutes : minutesGet}});
                 
                 const arrayVehicles = connectionCam.data[1]['vehicles'];
 

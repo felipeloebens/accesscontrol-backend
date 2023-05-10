@@ -25,21 +25,27 @@ class DatabaseController {
             return res.status(500).json({error : err.message});
         } finally {
             if (connection) {
-
-                if(req.body.last === true){
+                
+                if(req.headers.last === "true"){
                     data = await connection.execute(`SELECT * FROM ADMPESAGEM.VEHICLES_FLOW WHERE ID=(select max(ID) FROM ADMPESAGEM.VEHICLES_FLOW)	`);
+                }else if(req.headers.startdate && req.headers.finaldate ){
+                    data = await connection.execute(`SELECT * FROM ADMPESAGEM.VEHICLES_FLOW WHERE PASS_DATE BETWEEN TO_DATE('${req.headers.startdate}', 'YYYY/MM/DD HH24:MI:SS') AND TO_DATE('${req.headers.finaldate}', 'YYYY/MM/DD HH24:MI:SS') ORDER BY PASS_DATE DESC`);
                 }else{
                     data = await connection.execute(`SELECT * FROM ADMPESAGEM.VEHICLES_FLOW`);
                 }
                 let returnData = [];
 
                 data.rows.forEach(object => {
+                    let way;
+                    if(object[4] === "entering"){
+                        way = "Entrando";
+                    }
                     returnData.push({
                         id: object[0],
-                        license: object[1],
+                        license: object[1].toUpperCase(),
                         id_gate: object[2],
-                        pass_date: object[3],
-                        way: object[4],
+                        pass_date: timestampToDate(object[3]),
+                        way: way,
                     })
                 });
 
@@ -65,8 +71,10 @@ class DatabaseController {
         } finally {
             if (connection) {
 
-                if(req.body.last === true){
-                    data = await connection.execute(`SELECT * FROM ADMPESAGEM.SCALES WHERE ID=(select max(ID) FROM ADMPESAGEM.SCALES)	`);
+                if(req.headers.last === "true"){
+                    data = await connection.execute(`SELECT * FROM ADMPESAGEM.SCALES WHERE ID=(select max(ID) FROM ADMPESAGEM.SCALES)`);
+                }else if(req.headers.startdate && req.headers.finaldate){
+                    data = await connection.execute(`SELECT * FROM ADMPESAGEM.SCALES WHERE PASS_DATE BETWEEN TO_DATE('${req.headers.startdate}', 'YYYY/MM/DD HH24:MI:SS') AND TO_DATE('${req.headers.finaldate}', 'YYYY/MM/DD HH24:MI:SS') ORDER BY PASS_DATE DESC`);
                 }else{
                     data = await connection.execute(`SELECT * FROM ADMPESAGEM.SCALES`);
                 }
@@ -76,9 +84,9 @@ class DatabaseController {
                     returnData.push({
                         id: object[0],
                         scales: object[1],
-                        weight: object[2],
+                        weight: object[2]+ " Kg",
                         license: object[3],
-                        pass_date: object[4],
+                        pass_date: timestampToDate(object[4]),
                         
                     })
                 });
@@ -129,7 +137,6 @@ class DatabaseController {
     async insertGate(req, res) {
     
         let connection
-        console.log(req.body)
         try {
             connection = await connectDatabase();
         } catch (err) {
@@ -150,7 +157,7 @@ class DatabaseController {
     async insertWeight(req, res) {
     
         let connection
-        console.log(req.body)
+
         try {
             connection = await connectDatabase();
         } catch (err) {
@@ -172,7 +179,6 @@ class DatabaseController {
     async updateWeight(req, res) {
     
         let connection
-        console.log(req.body)
         try {
             connection = await connectDatabase();
         } catch (err) {
@@ -192,16 +198,16 @@ class DatabaseController {
 
     async insertVehiclesFlow(req, res) {
     
-        // const testInsert = { id : null, license : req.body.license, id_gate : req.body.id_gate, pass_date : req.body.pass_date, way : req.body.way};
+        // const testInsert = { id : null, license : req.headers.license, id_gate : req.headers.id_gate, pass_date : req.headers.pass_date, way : req.headers.way};
         let connection
 
-        console.log(req.body.vehicles);
         try {
             connection = await connectDatabase();
         } catch (err) {
             return res.status(500).json({error : err.message});
         } finally {
             if (connection && req.body.vehicles) {
+                console.log(req.body.vehicles);
                 const data = await connection.executeMany(`INSERT INTO ADMPESAGEM.VEHICLES_FLOW VALUES(:id, :license, :id_gate, TO_DATE(:pass_date, 'YYYY/MM/DD HH24:MI:SS'), :way)`, req.body.vehicles, {autoCommit: true});
                 return res.status(200).json(data);
             try {

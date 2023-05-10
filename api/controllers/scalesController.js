@@ -11,10 +11,15 @@ class ScalesController {
         this.connected = false;
         this.connParameter = {};
         this.erroCom = false;
+
+        this.dataAux = {};
+        this.clientAux = new ModbusRTU();
+        this.connectedAux = false;
+        this.connParameterAux = {};
+        this.erroComAux = false;
       }
 
     async connect() {
-    
         const error = await new Promise((resolve) => {
           this.client.setTimeout(3500);
           this.client.connectTCP(this.connParameter.ip, { port: parseInt(this.connParameter.port) }, (error) => resolve(error));
@@ -45,12 +50,6 @@ class ScalesController {
             case 0:
               await this.read();
               break;
-            case 6:
-              await this.writeSingle();
-              break;
-            case 16:
-              await this.writeMultiple();
-              break;
             default:
               this.erroCom = true;
               this.data = {"error" : "write parameter is invalid!"};
@@ -61,7 +60,7 @@ class ScalesController {
         const values = await new Promise((resolve) => {
             this.client.readHoldingRegisters(parseInt(this.connParameter.start), parseInt(this.connParameter.size), (error, values) => {
                 if (error) {
-                    console.log("Read registers error", error);
+                    console.log("Read registers error scale port 502", error);
                     this.data = { ip : this.connParameter.ip, id : parseInt(this.connParameter.id), error: "on read registers, verify the addresses!", status: "Error" };
                 } else {
                     this.data = Object.assign({}, values.data);
@@ -74,6 +73,61 @@ class ScalesController {
     
         return values;
     }
+
+
+    async connectAux() {
+      const error = await new Promise((resolve) => {
+        this.clientAux.setTimeout(3500);
+        this.clientAux.connectTCP(this.connParameterAux.ip, { port: parseInt(this.connParameterAux.port) }, (error) => resolve(error));
+        this.clientAux.setID(parseInt(this.connParameterAux.id));
+      });
+      await this.onConnectedAux(error);
+    }
+  
+    async onConnectedAux(error) {
+      if (typeof (error) !== "undefined") {
+        
+        this.dataAux = { "ip" : this.connParameterAux.ip, "id" : parseInt(this.connParameterAux.id), "error" : "no response from device!"};
+        this.connectedAux = false;
+        console.log(error);
+  
+        if(error !== null || error !== undefined){
+         this.erroComAux = true;
+        }
+  
+        return;
+      }
+  
+      this.dataAux = {}
+      this.connectedAux = true;
+
+      var j = parseInt(this.connParameterAux.write);
+        switch(j) {
+          case 0:
+            await this.readAux();
+            break;
+          default:
+            this.erroComAux = true;
+            this.dataAux = {"error" : "write parameter is invalid!"};
+        } 
+    }
+  
+    async readAux() {
+      const values = await new Promise((resolve) => {
+          this.clientAux.readHoldingRegisters(parseInt(this.connParameterAux.start), parseInt(this.connParameterAux.size), (error, values) => {
+              if (error) {
+                  console.log("Read registers error scale port 503", error);
+                  this.dataAux = { ip : this.connParameterAux.ip, id : parseInt(this.connParameterAux.id), error: "on read registers, verify the addresses!", status: "Error" };
+              } else {
+                  this.dataAux = Object.assign({}, values.data);
+              }
+              resolve(values);
+              this.clientAux.close();
+          });
+      });
+  
+      return values;
+  }
 
     async weights(req, res) {
 
@@ -153,6 +207,41 @@ class ScalesController {
             }
           
     }
+
+
+    async display(req, res) {
+      const connModbus = {
+          ip : config.IP_SCALES,
+          port : config.PORT_SCALES_DISPLAY,
+          id : 1,
+          start : 0,
+          size : 2, 
+          write : 0
+        };
+
+          try {
+            this.connParameterAux = connModbus;
+            const readReg = await this.connectAux();
+                if(this.erroComAux){
+                  res.status(500).json({ status: "Error"})
+                }else {
+
+                  let rawDataActual = new ArrayBuffer(4);
+                  let intViewActual = new Uint16Array(rawDataActual);
+                  let fltViewActual = new Uint32Array(rawDataActual);
+
+                  intViewActual[0] = this.data[0]; //low
+                  intViewActual[1] = this.data[1]; //high
+
+                  res.status(200).json({ actualWeight : fltViewActual[0] , unit: "Kg", status: "Ok" })
+                }  
+            this.erroComAux = false;
+            } catch (error) {
+              console.error(error)
+              return res.sendStatus(500);
+          }
+        
+  }
 
 
 }
