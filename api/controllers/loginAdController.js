@@ -14,9 +14,10 @@ class LoginController{
         const passwordAd = CryptoJS.AES.decrypt(req.body.pass, 'Secret pass');
         const passwordOriginal = passwordAd.toString(CryptoJS.enc.Utf8);
         const client = ldap.createClient({
+            reconnect: true,
             url: [config.URL_AD],
-            timeout: 5000,
-            connectTimeout: 10000,
+            timeout: 8000,
+            connectTimeout: 12000,
             tlsOptions: { rejectUnauthorized: false }
         });
    
@@ -64,9 +65,11 @@ class LoginController{
                                     levelAccess: 1,
                                     token: token
                                 })
+                                client.destroy();
                             }
+                            
                             client.unbind(function(error) {
-
+                                client.destroy();
                             });
                         });
     

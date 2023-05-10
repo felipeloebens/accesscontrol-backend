@@ -61,16 +61,15 @@ class ScalesController {
             this.client.readHoldingRegisters(parseInt(this.connParameter.start), parseInt(this.connParameter.size), (error, values) => {
                 if (error) {
                     console.log("Read registers error scale port 502", error);
+                    this.client.close();
                     this.data = { ip : this.connParameter.ip, id : parseInt(this.connParameter.id), error: "on read registers, verify the addresses!", status: "Error" };
                 } else {
                     this.data = Object.assign({}, values.data);
                 }
-    
                 resolve(values);
-                this.client.close();
             });
         });
-    
+        this.client.close();
         return values;
     }
 
@@ -86,7 +85,6 @@ class ScalesController {
   
     async onConnectedAux(error) {
       if (typeof (error) !== "undefined") {
-        
         this.dataAux = { "ip" : this.connParameterAux.ip, "id" : parseInt(this.connParameterAux.id), "error" : "no response from device!"};
         this.connectedAux = false;
         console.log(error);
@@ -117,15 +115,15 @@ class ScalesController {
           this.clientAux.readHoldingRegisters(parseInt(this.connParameterAux.start), parseInt(this.connParameterAux.size), (error, values) => {
               if (error) {
                   console.log("Read registers error scale port 503", error);
+                  this.clientAux.close();
                   this.dataAux = { ip : this.connParameterAux.ip, id : parseInt(this.connParameterAux.id), error: "on read registers, verify the addresses!", status: "Error" };
               } else {
                   this.dataAux = Object.assign({}, values.data);
               }
               resolve(values);
-              this.clientAux.close();
           });
       });
-  
+      this.clientAux.close();
       return values;
   }
 
