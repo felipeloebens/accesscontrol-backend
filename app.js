@@ -12,7 +12,7 @@ const app = express();
 app.set('port', process.env.PORT || config.get('server.port'));
 
 // MIDDLEWARES
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors({ origin: "*" }));
 
 // add routes to app

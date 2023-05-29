@@ -1,12 +1,15 @@
 import AxiosDigestAuth from '@mhoc/axios-digest-auth';
 import csvToJson from 'csvtojson';
 import formatDate from "../../helpers/formatDate";
+import path from 'path';
+const Client = require("ftp")
 const util = require('util');
+const fs = require('fs');
 const moment = require('moment');
 const config = process.env;
 
 class CamerasController {
-    
+
     async camera1(req, res) {
         let startDate;
         let finalDate;
@@ -106,6 +109,73 @@ class CamerasController {
         }
         
       }
+
+    async imagesCamera1(req, res) {
+      const convert = (imgPath) => {
+        // read image file
+        fs.readFile(imgPath, (err, data)=>{
+            // error handle
+            if(err) {
+                throw err;
+            }
+            
+            // get image file extension name
+            const extensionName = path.extname(imgPath);
+            
+            // convert image file to base64-encoded string
+            const base64Image = Buffer.from(data, 'binary').toString('base64');
+            
+            // combine all strings
+            const base64ImageStr = `data:image/${extensionName.split('.').pop()};base64,${base64Image}`;
+            returnValue(base64ImageStr)
+            return base64ImageStr;
+        })
+       
+    }
+
+
+    
+      let imageName = '';
+      let myDir = '';
+      let dataFromImage = {};
+      const client = new Client();
+      client.on('ready', function() {
+        const strYear = req.query.pass_date.slice(0, 4);
+        const strMonth = req.query.pass_date.slice(5, 7);
+        const strDay = req.query.pass_date.slice(8, 10);
+        const strHour = req.query.pass_date.slice(11, 13);
+        const strMin = req.query.pass_date.slice(14, 16);
+        let license = ''
+        myDir = "/Portaria/"+strYear+"-"+strMonth+"-"+strDay+"/"+strHour+"/"+strMin+"/";
+        if(req.query.license === "SEM PLACA"){
+          license = "Sem placa";
+        }else{
+          license = req.query.license;
+        }
+
+        client.list("/Portaria/"+strYear+"-"+strMonth+"-"+strDay+"/"+strHour+"/"+strMin+"/",(err, list) => {
+            if (err) console.dir(err);
+            dataFromImage = list.find(c => c.name.includes(license));
+            imageName = dataFromImage.name;            
+            
+            client.get(myDir+imageName, (err, stream) => {
+              if(err) throw err;
+              stream.once('close', () => client.end())
+              stream.pipe(fs.createWriteStream('./temp/imagemModal.png'));
+            })
+        });
+    });
+      
+    await client.connect({ host: "10.0.0.7", user: "felipe.loebens", password: "Automac@1" });
+
+    setTimeout(() => {
+      convert('./temp/imagemModal.png');
+    }, 200)
+
+    const returnValue = (value) => {
+        return res.status(200).send(value);
+    }
+    }
 }
 
 module.exports = new CamerasController()
