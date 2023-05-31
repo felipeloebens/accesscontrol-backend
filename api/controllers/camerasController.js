@@ -170,7 +170,7 @@ class CamerasController {
 
     setTimeout(() => {
       convert('./temp/imagemModal.png');
-    }, 200)
+    }, 300)
 
     const returnValue = (value) => {
         return res.status(200).send(value);
