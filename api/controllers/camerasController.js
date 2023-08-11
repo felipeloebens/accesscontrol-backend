@@ -166,7 +166,7 @@ class CamerasController {
         });
     });
       
-    await client.connect({ host: "10.0.0.7", user: "felipe.loebens", password: "Automac@1" });
+    await client.connect({ host: "10.0.0.7", user: "sgli", password: "aHn5fHEqGY2HfJ6s8qTC" });
 
     setTimeout(() => {
       convert('./temp/imagemModal.png');
